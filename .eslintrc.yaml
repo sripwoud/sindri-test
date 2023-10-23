@@ -1,0 +1,5 @@
+extends: ['@sripwoud']
+overrides:
+  - files: ['test/jest.config.ts']
+    rules:
+      '@typescript-eslint/no-non-null-assertion': off
