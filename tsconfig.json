@@ -6,10 +6,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "esModuleInterop": true,
-    "paths": {
-      "@mod": ["src/mod"],
-      "@mod/*": ["src/mod/*"]
-    },
     "module": "CommonJS",
     "moduleResolution": "node",
     "resolveJsonModule": true

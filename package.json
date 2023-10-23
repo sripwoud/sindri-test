@@ -1,8 +1,7 @@
 {
   "name": "ts-template",
   "scripts": {
-    "barrels": "barrelsby --config .barrelsby.json",
-    "_build": "pnpm barrels && rm -rf dist && tsc --project tsconfig.compile.json",
+    "_build": "rm -rf dist && tsc --project tsconfig.compile.json",
     "build": "turbo run _build",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
     "fix": "turbo _format _lint",
@@ -14,7 +13,7 @@
     "format": "turbo run _format",
     "_format.check": "prettier --check .",
     "format.check": "turbo run _format.check",
-    "precommit": "tsc && pnpm barrels && lint-staged",
+    "precommit": "tsc && lint-staged",
     "prepare": "husky install",
     "setup": "pnpm 2> /dev/null || npm i -g pnpm && pnpm i",
     "start": "pnpm build && pnpm start.prod",
@@ -48,7 +47,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "barrelsby": "^2.5.1",
     "concurrently": "^7.6.0",
     "module-alias": "^2.2.2",
     "tslib": "^2.6.2"

@@ -1,13 +1,4 @@
-import assert from 'assert'
 import type { JestConfigWithTsJest } from 'ts-jest'
-import { pathsToModuleNameMapper } from 'ts-jest'
-import { compilerOptions } from '../tsconfig.json'
-
-const moduleNameMapper = pathsToModuleNameMapper(compilerOptions.paths, {
-  prefix: '<rootDir>/',
-})
-
-assert(moduleNameMapper !== undefined)
 
 const jestConfig: JestConfigWithTsJest = {
   clearMocks: true,
@@ -30,7 +21,6 @@ const jestConfig: JestConfigWithTsJest = {
     '<rootDir>/src',
   ],
   moduleFileExtensions: ['js', 'json', 'ts'],
-  moduleNameMapper,
   preset: 'ts-jest',
   rootDir: '..',
   setupFilesAfterEnv: ['./test/setup.ts'],
