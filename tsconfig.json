@@ -6,8 +6,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "esModuleInterop": true,
+    "lib": ["DOM", "DOM.Iterable"],
     "module": "CommonJS",
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "useUnknownInCatchVariables": false
   }
 }
