@@ -1,21 +1,27 @@
 export interface ClientI {
   baseUrl: string
   timeout: number
-  headers: Record<string, string>
 
   pollForStatus: (endpoint: string, timeout: number) => Promise<any>
-  request: (
+  request: <R>(
     endpoint: string,
     validateStatus: number,
     options?: RequestInit,
-  ) => Promise<Record<string, any>>
+  ) => Promise<R>
   validateStatus: (response: Response, status: number) => void
+  createCircuit: ({
+    circuitName,
+    circuitType,
+  }: createCircuitReq) => Promise<string>
+  uploadCircuitFile: ({
+    circuitId,
+    path,
+  }: UploadCircuitFileReq) => Promise<boolean>
 }
 
 export interface ClientArgs {
   baseUrl: string
   timeout: number
-  headers: Record<string, string>
 }
 
 export interface CreatedOk {
@@ -33,4 +39,14 @@ export interface CreatedOk {
   trusted_setup_file: unknown | null
   verification_key: unknown | null
   error: unknown | null
+}
+
+export interface createCircuitReq {
+  circuitName: string
+  circuitType: string
+}
+
+export interface UploadCircuitFileReq {
+  circuitId: string
+  path: string
 }
