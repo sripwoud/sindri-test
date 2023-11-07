@@ -1,5 +1,6 @@
 {
-  "name": "ts-template",
+  "name": "sindri-test",
+  "type": "module",
   "scripts": {
     "_build": "rm -rf dist && tsc --project tsconfig.compile.json",
     "build": "turbo run _build",
@@ -15,11 +16,7 @@
     "format.check": "turbo run _format.check",
     "precommit": "tsc && lint-staged",
     "prepare": "husky install",
-    "start": "pnpm build && pnpm start.prod",
-    "start.dev": "NODE_ENV=development tsnd --cls --exit-child --ignore-watch node_modules --quiet --transpile-only -r tsconfig-paths/register src",
-    "test": "turbo run _test --cache-dir=.turbo",
-    "test.watch": "pnpm _test --watch --coverage=false",
-    "_test": "jest --config test/jest.config.ts",
+    "start": "pnpm build && NODE_ENV=production node -r module-alias/register dist",
     "validate": "turbo _format.check _lint.check --cache-dir=.turbo"
   },
   "devDependencies": {
@@ -37,6 +34,7 @@
     "lint-staged": "^13.1.0",
     "reflect-metadata": "^0.1.13",
     "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.1.0",
     "turbo": "^1.10.12",
@@ -45,7 +43,9 @@
   "dependencies": {
     "concurrently": "^7.6.0",
     "form-data": "^4.0.0",
-    "tslib": "^2.6.2"
+    "module-alias": "^2.2.3",
+    "tslib": "^2.6.2",
+    "zx": "^7.2.3"
   },
   "engines": {
     "node": ">=19"

@@ -4,4 +4,5 @@
 
 ```commandline
 bash setup.sh
+pnpm start
 ```

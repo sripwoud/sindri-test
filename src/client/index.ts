@@ -1,12 +1,19 @@
-import { API_KEY, API_URL, TWENTY_MINUTES } from '../constants'
+import FormData from 'form-data'
+import { $ } from 'zx'
+import { API_KEY, API_URL, TWENTY_MINUTES } from '../constants.js'
 import {
   ClientArgs,
   ClientI,
   createCircuitReq,
+  Item,
+  PollCircuitStatusRes,
+  PollProofStatusRes,
   UploadCircuitFileReq,
-} from './interface'
+} from './interface.js'
 
-export * from './interface'
+export * from './interface.js'
+
+export * from './interface.js'
 
 export class Client implements ClientI {
   baseUrl: string
@@ -22,15 +29,6 @@ export class Client implements ClientI {
     validateStatus = 200,
     options?: RequestInit,
   ): Promise<R> {
-    console.log(`${this.baseUrl}/${endpoint}`)
-    const _options = {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        ...options?.headers,
-      },
-    }
-    console.log(_options)
     const response = await fetch(`${this.baseUrl}/${endpoint}`, {
       ...options,
       headers: {
@@ -47,21 +45,36 @@ export class Client implements ClientI {
     return await response.json()
   }
 
-  async pollForStatus(endpoint: string, timeout = this.timeout): Promise<any> {
-    for (let i = 0; i < timeout; i++) {
-      const response = await this.request(endpoint, 200)
+  private async pollForStatus<
+    T extends {
+      status: 'Created' | 'Queued' | 'In Progress' | 'Ready' | 'Failed'
+    },
+  >({ id, type }: { id: string; type: Item }): Promise<T> {
+    for (let i = 0; i < TWENTY_MINUTES; i++) {
+      const response = await this.request<T>(`${type}/${id}/detail`, 200)
 
-      // @ts-expect-error
-      const status: string = response?.['data']?.status
-      if (['Ready', 'Failed'].includes(status)) {
-        console.log(`Poll exited after ${i} seconds with status: ${status}`)
+      console.log(response)
+      if (['Ready', 'Failed'].includes(response.status)) {
+        console.log(
+          `Poll exited after ${i} seconds with status: ${response.status}`,
+        )
         return response
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
 
-    throw new Error(`Polling timed out after ${timeout} seconds.`)
+    throw new Error(`Polling timed out after ${TWENTY_MINUTES} seconds.`)
+  }
+
+  private async pollForCircuitStatus(
+    id: string,
+  ): Promise<PollCircuitStatusRes> {
+    return this.pollForStatus<PollCircuitStatusRes>({ id, type: Item.Circuit })
+  }
+
+  private async pollForProofStatus(id: string): Promise<PollProofStatusRes> {
+    return this.pollForStatus<PollProofStatusRes>({ id, type: Item.Proof })
   }
 
   async validateStatus(response: Response, status: number) {
@@ -94,21 +107,51 @@ export class Client implements ClientI {
     circuitId,
     path,
   }: UploadCircuitFileReq): Promise<boolean> {
-    console.log({ path })
     const body = new FormData()
-    body.append('files', path)
+    body.append('files', `@${path}`)
 
-    return await this.request<{ success: boolean }>(
-      `circuit/${circuitId}/uploadfiles`,
+    // hack, could not make it work with node form data and native fetch
+    const r = await $`curl --request POST \
+     --url ${this.baseUrl}/circuit/${circuitId}/uploadfiles \
+      --header "Authorization: Bearer ${API_KEY}" \
+       --header "Content-Type: multipart/form-data" \
+       --form files=@${path}`
+
+    const { success } = JSON.parse(r.stdout)
+    return success
+  }
+
+  async compileCircuit(circuitId: string): Promise<void> {
+    const { success } = await this.request<{ success: boolean }>(
+      `circuit/${circuitId}/compile`,
       201,
       {
-        body,
+        method: 'POST',
+      },
+    )
+
+    if (!success) throw new Error('Circuit compilation failed.')
+    const { status } = await this.pollForCircuitStatus(circuitId)
+    if (status === 'Failed') throw new Error('Circuit compilation failed.')
+  }
+
+  private async _prove(circuitId: string, input: any): Promise<string> {
+    return this.request<{ proof_id: string }>(
+      `circuit/${circuitId}/prove`,
+      201,
+      {
+        body: JSON.stringify({ proof_input: input }),
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
         method: 'POST',
       },
-    ).then(({ success }) => success)
+    ).then(({ proof_id: proofId }) => proofId)
+  }
+
+  async prove(circuitId: string, inputs: any): Promise<PollProofStatusRes> {
+    const proofId = await this._prove(circuitId, inputs)
+    return await this.pollForProofStatus(proofId)
   }
 }
 
